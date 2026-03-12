@@ -9,17 +9,18 @@
 // url: file.ufsUrl,
 //};
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server"; // They come from Next.js, it handles HTTP requests and send responses
 import { AssemblyAI } from "assemblyai";
 
 interface TranscriptionResponse {
   url: string;
   transcription: string;
+  
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse<TranscriptionResponse | { error: string; details?: string }>> {
   try {
-    const { url } = await req.json();
+    const { url, language } = await req.json();
 
     if (!url || typeof url !== "string") {
       return NextResponse.json({ error: "Valid audio URL is required" }, { status: 400 });
@@ -37,13 +38,27 @@ export async function POST(req: NextRequest): Promise<NextResponse<Transcription
       apiKey: apiKey,
     });
 
-    const transcript = await client.transcripts.transcribe({
-      audio: cleanUrl,
-      speech_models: ["universal-2"],
-      language_detection: true,
-      speaker_labels: true,
-      speakers_expected: 2,
-    });
+    // Build transcript params — language_code and language_detection are mutually exclusive
+    const transcriptParams: Parameters<typeof client.transcripts.transcribe>[0] =
+      language && typeof language === "string" //Checking if a language was provided 
+        ? {
+          
+          audio: cleanUrl,
+          speech_models: ["universal-2"],
+          language_code: language,
+          speaker_labels: true,
+          speakers_expected: 2,
+        }
+        : {
+          // No language: let AssemblyAI auto-detect
+          audio: cleanUrl,
+          speech_models: ["universal-2"],
+          language_detection: true,
+          speaker_labels: true,
+          speakers_expected: 2,
+        };
+
+    const transcript = await client.transcripts.transcribe(transcriptParams);
 
     let transcription = "";
     if (transcript.utterances && transcript.utterances.length > 0) {
@@ -55,17 +70,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<Transcription
     }
 
 
-    console.log(transcript)
+    console.log(transcript) // mutation from convex
 
     return NextResponse.json({
       url: cleanUrl,
       transcription: transcription,
     });
   } catch (error) {
+    console.error("[/api/transcribe] Error:", error);
     return NextResponse.json(
       {
         error: "Transcription request failed",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : String(error)
       },
       { status: 500 }
     );

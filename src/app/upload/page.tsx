@@ -19,11 +19,21 @@ interface ApiError {
   details?: string;
 }
 
+const LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "fr", label: "French" },
+  { code: "de", label: "German" },
+  { code: "sw", label: "Swahili" },
+] as const;
+
+type LanguageCode = typeof LANGUAGES[number]["code"];
+
 export default function UploadPage() {
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
   const [transcription, setTranscription] = useState<string>("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [error, setError] = useState<string>("");
+  const [language, setLanguage] = useState<LanguageCode>("en");
 
   const handleTranscribe = async () => {
     if (!uploadedFile) return;
@@ -37,6 +47,7 @@ export default function UploadPage() {
         "/api/transcribe",
         {
           url: uploadedFile.ufsUrl,
+          language,
         },
       );
 
@@ -98,6 +109,8 @@ export default function UploadPage() {
           file={uploadedFile}
           isTranscribing={isTranscribing}
           onTranscribe={handleTranscribe}
+          language={language}
+          onLanguageChange={setLanguage}
         />
       )}
 
@@ -112,10 +125,14 @@ function FileCard({
   file,
   isTranscribing,
   onTranscribe,
+  language,
+  onLanguageChange,
 }: {
   file: UploadedFile;
   isTranscribing: boolean;
   onTranscribe: () => void;
+  language: LanguageCode;
+  onLanguageChange: (lang: LanguageCode) => void;
 }) {
   return (
     <div className="w-full max-w-md mt-4">
@@ -124,12 +141,29 @@ function FileCard({
           <span className="font-semibold">Uploaded:</span> {file.name}
         </p>
         <p className="text-xs text-gray-500 mb-4 break-all">{file.ufsUrl}</p>
+
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Transcription Language
+        </label>
+        <select
+          value={language}
+          onChange={(e) => onLanguageChange(e.target.value as LanguageCode)}
+          disabled={isTranscribing}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        >
+          {LANGUAGES.map((lang) => (
+            <option key={lang.code} value={lang.code}>
+              {lang.label}
+            </option>
+          ))}
+        </select>
+
         <button
           onClick={onTranscribe}
           disabled={isTranscribing}
           className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
         >
-          {isTranscribing ? "Transcribing..." : "Transcribe"}
+          {isTranscribing ? `Transcribing in ${LANGUAGES.find(l => l.code === language)?.label}...` : "Transcribe"}
         </button>
       </div>
     </div>
