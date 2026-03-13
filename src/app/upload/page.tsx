@@ -182,11 +182,32 @@ function ErrorAlert({ message }: { message: string }) {
 }
 
 function TranscriptionResult({ text }: { text: string }) {
+  // Split on "Speaker X:" boundaries while keeping the label with its text
+  const utterances = text
+    .split(/(?=Speaker [A-Z]:)/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   return (
-    <div className="w-full max-w-md mt-4">
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="font-semibold text-gray-700 mb-2">Transcription</h3>
-        <p className="text-sm text-gray-600 whitespace-pre-wrap">{text}</p>
+    <div className="w-full max-w-2xl mt-4">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <h3 className="font-semibold text-gray-700 mb-1">Transcription</h3>
+        <p className="text-xs text-gray-400 mb-4">Detected: English</p>
+        <div className="space-y-4">
+          {utterances.map((utterance, i) => {
+            const colonIdx = utterance.indexOf(":");
+            const label = colonIdx !== -1 ? utterance.slice(0, colonIdx + 1) : "";
+            const body = colonIdx !== -1 ? utterance.slice(colonIdx + 1).trim() : utterance;
+            return (
+              <p key={i} className="text-sm text-gray-700 leading-relaxed">
+                {label && (
+                  <span className="font-semibold text-gray-900">{label} </span>
+                )}
+                {body}
+              </p>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
