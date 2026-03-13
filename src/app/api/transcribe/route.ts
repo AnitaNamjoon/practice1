@@ -15,10 +15,10 @@ import { AssemblyAI } from "assemblyai";
 interface TranscriptionResponse {
   url: string;
   transcription: string;
-  
+
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse<TranscriptionResponse | { error: string;  }>> {
+export async function POST(req: NextRequest): Promise<NextResponse<TranscriptionResponse | { error: string; }>> {
   try { //error handling 
     const { url, language } = await req.json();
 
@@ -38,11 +38,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<Transcription
       apiKey: apiKey,
     });
 
-  // language_code and language_detection cannot exist together like at the same time so you must choose one of them 
+    // language_code and language_detection cannot exist together like at the same time so you must choose one of them 
     const transcriptParams: Parameters<typeof client.transcripts.transcribe>[0] =
       language && typeof language === "string" //Checking if a language was provided 
         ? {
-          
           audio: cleanUrl,
           speech_models: ["universal-2"],
           language_code: language,

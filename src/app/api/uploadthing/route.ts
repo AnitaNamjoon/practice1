@@ -17,4 +17,10 @@ setGlobalDispatcher(
 
 export const { GET, POST } = createRouteHandler({
   router: uploadRouter,
+  config: {
+    // Disable dev-mode so awaitServerData defaults to false (no server callback waiting)
+    isDev: false,
+    // Run background work without blocking the HTTP response
+    handleDaemonPromise: "void",
+  },
 });
