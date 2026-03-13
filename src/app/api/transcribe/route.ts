@@ -18,8 +18,8 @@ interface TranscriptionResponse {
   
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse<TranscriptionResponse | { error: string; details?: string }>> {
-  try {
+export async function POST(req: NextRequest): Promise<NextResponse<TranscriptionResponse | { error: string;  }>> {
+  try { //error handling 
     const { url, language } = await req.json();
 
     if (!url || typeof url !== "string") {
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<Transcription
       apiKey: apiKey,
     });
 
-    // Build transcript params — language_code and language_detection are mutually exclusive
+  // language_code and language_detection cannot exist together like at the same time so you must choose one of them 
     const transcriptParams: Parameters<typeof client.transcripts.transcribe>[0] =
       language && typeof language === "string" //Checking if a language was provided 
         ? {
